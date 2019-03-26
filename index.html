@@ -12,13 +12,26 @@
                <v-container fluid fill-height>
                  <v-layout align-center justify-center column fill-height>
                     <v-flex shrink>
+                       <v-progress-circular
+                        v-if="loading"
+                        :rotate="180"
+                        :size="100"
+                        :width="15"
+                        :value="progress"
+                        color="pink"
+                      >
+                        {{ progress }}
+                      </v-progress-circular>
                       <v-textarea
                         outline
-                        v-model="message"
+                        v-model="dataSet"
                         name="input-7-4"
                         label="Outline textarea"
                       ></v-textarea>
-                      <v-btn @click="enviarMensagem(message)">Send message by Socket</v-btn>
+                      <v-btn @click="executarProcessamento(dataSet)">Send a data to be processed by socket</v-btn>
+                      <v-alert :value="true" color="info" icon="info" outline>
+                        {{ result }}
+                      </v-alert>
                     </v-flex>
                  </v-layout>
                </v-container>
@@ -26,24 +39,84 @@
         </v-app>
       </div>
       <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+      <script src="https://unpkg.com/vuex@3.1.0/dist/vuex.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
       <script>
 
         const socket = io("http://localhost:8080");
+
+        const store = new Vuex.Store({
+          state: {
+            loading: false,
+            progress: 0,
+            result: ''
+          },
+          mutations: {
+            setLoading (state, loading) {
+              state.loading = loading
+            },
+            setProgress (state, progress) {
+              state.progress = progress
+            },
+            setResult (state, result) {
+              state.result = result
+            }
+          },
+          actions: {
+            executionRequest ({ commit }, dataSet) {
+              commit('setLoading', true)
+              socket.emit("execute", dataSet)
+            },
+            updateProgress ({ commit }, progress) {
+              commit('setProgress', progress)
+            }
+          },
+          getters: {
+            loading (state) {
+              return state.loading
+            },
+            progress (state) {
+              return state.progress
+            },
+            result (state) {
+              return state.result
+            }
+          }
+        })
+
         new Vue({ 
           el: '#app',
           data () {
             return {
-              message: "Esta é uma mensagem para o socket."
+              dataSet: "{ id: 1, content: 'This is a data set'}"
             }
           },
           methods: {
-            enviarMensagem (message) {
-              socket.emit("message", message);
+            executarProcessamento (dataSet) {
+              store.dispatch('executionRequest', dataSet)
+            }
+          },
+          mounted () {
+            socket.on('progress', (progress) => {
+              store.dispatch('updateProgress', progress)
+            })
+          },
+          computed: {
+            result () {
+              return store.getters.result
+            },
+            progress () {
+              return store.getters.progress
+            },
+            loading () {
+              return store.getters.loading
             }
           }
         })
+
+
       </script>
     </body>
 </html>
