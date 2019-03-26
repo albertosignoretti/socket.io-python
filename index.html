@@ -9,11 +9,17 @@
       <div id="app">
          <v-app>
             <v-content>
-               <v-container grid fluid>
+               <v-container fluid fill-height>
                  <v-layout align-center justify-center column fill-height>
-                    <v-flex xs12>
-                     <v-btn>Send message by Socket</v-btn>
-                     </v-flex>
+                    <v-flex shrink>
+                      <v-textarea
+                        outline
+                        v-model="message"
+                        name="input-7-4"
+                        label="Outline textarea"
+                      ></v-textarea>
+                      <v-btn @click="enviarMensagem(message)">Send message by Socket</v-btn>
+                    </v-flex>
                  </v-layout>
                </v-container>
             </v-content>
@@ -21,6 +27,23 @@
       </div>
       <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/vuetify/dist/vuetify.js"></script>
-     <script> new Vue({ el: '#app' })  </script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+      <script>
+
+        const socket = io("http://localhost:8080");
+        new Vue({ 
+          el: '#app',
+          data () {
+            return {
+              message: "Esta é uma mensagem para o socket."
+            }
+          },
+          methods: {
+            enviarMensagem (message) {
+              socket.emit("message", message);
+            }
+          }
+        })
+      </script>
     </body>
 </html>
